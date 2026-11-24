@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Library | Book Reservation System</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome for Book & UI Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- ================= 1. LOGIN SCREEN ================= -->
+    <div id="login-screen" class="screen active">
+        <div class="login-box">
+            <div class="logo-header">
+                <i class="fa-solid fa-building-columns"></i>
+                <h1>Central Library</h1>
+                <p>Book Reservation & Management Portal</p>
+            </div>
+
+            <!-- Role Switcher: Student vs Admin -->
+            <div class="role-tabs">
+                <button id="tab-student" class="tab-btn active" onclick="switchRole('student')">
+                    <i class="fa-solid fa-user-graduate"></i> Student Login
+                </button>
+                <button id="tab-admin" class="tab-btn" onclick="switchRole('admin')">
+                    <i class="fa-solid fa-user-shield"></i> Admin Login
+                </button>
+            </div>
+
+            <!-- Student Login Form -->
+            <form id="student-login-form" onsubmit="handleStudentLogin(event)">
+                <div class="input-group">
+                    <label>Student Full Name</label>
+                    <input type="text" id="student-name" placeholder="Enter your full name" required>
+                </div>
+                <div class="input-group">
+                    <label>Registration Number</label>
+                    <input type="text" id="student-reg" placeholder="e.g., 12621932" required>
+                </div>
+                <button type="submit" class="primary-btn">Enter Central Library</button>
+            </form>
+
+            <!-- Admin Login Form -->
+            <form id="admin-login-form" class="hidden" onsubmit="handleAdminLogin(event)">
+                <div class="input-group">
+                    <label>Admin ID</label>
+                    <input type="text" id="admin-id" placeholder="Enter Admin ID (default: admin)" required>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="admin-pass" placeholder="Enter Password (default: admin123)" required>
+                </div>
+                <button type="submit" class="primary-btn admin-btn">Login as Head Librarian</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= 2. WELCOME POPUP MODAL ================= -->
+    <div id="welcome-popup" class="modal hidden">
+        <div class="modal-content popup-box">
+            <i class="fa-solid fa-book-open-reader popup-icon"></i>
+            <h2>Welcome to Central Library!</h2>
+            <p id="welcome-student-details"></p>
+            <div class="rules-reminder">
+                <span><i class="fa-solid fa-calendar-check"></i> Borrowing Period: <strong>15 Days</strong></span>
+                <span><i class="fa-solid fa-indian-rupee-sign"></i> Late Fine: <strong>₹10 / Day</strong></span>
+            </div>
+            <button onclick="closeWelcomePopup()" class="primary-btn">Explore Books</button>
+        </div>
+    </div>
+
+    <!-- ================= 3. STUDENT DASHBOARD ================= -->
+    <div id="student-dashboard" class="screen hidden">
+        <!-- Navbar with University Logo Placeholder -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <div class="uni-logo-placeholder" title="University Logo Placeholder">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>UNI LOGO</span>
+                </div>
+                <div>
+                    <div class="brand-title">Central Library</div>
+                    <small class="brand-subtitle">University Book Reservation Portal</small>
+                </div>
+            </div>
+            <div class="nav-user">
+                <span id="nav-user-info"></span>
+                <button onclick="toggleRecordSection()" class="nav-btn">
+                    <i class="fa-solid fa-clock-rotate-left"></i> My Book Record (<span id="record-count">0</span>)
+                </button>
+                <button onclick="logout()" class="logout-btn">Logout</button>
+            </div>
+        </nav>
+
+        <div class="container">
+            <!-- Search & Filters (Section-wise & Course-wise) -->
+            <div class="filter-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-input" onkeyup="filterBooks()" placeholder="Search by Book Name, Author, or Shelf No...">
+                </div>
+
+                <select id="course-filter" onchange="filterBooks()">
+                    <option value="ALL">All Courses</option>
+                    <option value="B.Tech CSE">B.Tech CSE</option>
+                    <option value="B.Tech ECE">B.Tech ECE</option>
+                    <option value="Civil Engineering">Civil Engineering</option>
+                    <option value="BBA / MBA">BBA / MBA</option>
+                    <option value="B.Sc Sciences">B.Sc Sciences</option>
+                </select>
+
+                <select id="section-filter" onchange="filterBooks()">
+                    <option value="ALL">All Library Sections</option>
+                    <option value="Section A - Programming & AI">Section A - Programming & AI</option>
+                    <option value="Section B - Core Electronics">Section B - Core Electronics</option>
+                    <option value="Section C - Management & Finance">Section C - Management & Finance</option>
+                    <option value="Section D - Applied Mathematics">Section D - Applied Mathematics</option>
+                    <option value="Section E - Civil & Structural Engineering">Section E - Civil & Structural Engineering</option>
+                </select>
+            </div>
+
+            <!-- Books Grid -->
+            <h2 class="section-heading">Available Library Catalog</h2>
+            <div id="books-grid" class="books-grid">
+                <!-- Books will be dynamically injected here by JS -->
+            </div>
+
+            <!-- Total Book Record / History Table with Return Book Button -->
+            <div id="student-record-section" class="record-panel">
+                <h2><i class="fa-solid fa-list-check"></i> Your Total Book Reservation Record</h2>
+                <p class="record-summary" id="total-books-summary">You have booked 0 books so far.</p>
+                <div class="table-responsive">
+                    <table class="record-table">
+                        <thead>
+                            <tr>
+                                <th>Receipt ID</th>
+                                <th>Book Title</th>
+                                <th>Shelf No.</th>
+                                <th>Booking Date</th>
+                                <th>Return Due Date (15 Days)</th>
+                                <th>Times Booked</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="record-table-body">
+                            <!-- Booking history rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 4. BOOKING RECEIPT MODAL ================= -->
+    <div id="receipt-modal" class="modal hidden">
+        <div class="modal-content receipt-box" id="printable-receipt">
+            <div class="receipt-header">
+                <h3>CENTRAL LIBRARY - BOOKING RECEIPT</h3>
+                <p>Official Library Issue & Reservation Slip</p>
+            </div>
+            <hr>
+            <div class="receipt-body">
+                <p><strong>Receipt No:</strong> <span id="rec-id"></span></p>
+                <p><strong>Student Name:</strong> <span id="rec-student-name"></span></p>
+                <p><strong>Registration No:</strong> <span id="rec-student-reg"></span></p>
+                <hr class="dashed">
+                <p><strong>Book Title:</strong> <span id="rec-book-title"></span></p>
+                <p><strong>Course & Section:</strong> <span id="rec-course-sec"></span></p>
+                <p><strong>Shelf Number:</strong> <span id="rec-shelf"></span></p>
+                <hr class="dashed">
+                <p><strong>Date of Booking:</strong> <span id="rec-issue-date"></span></p>
+                <p><strong>Return Due Date (15 Days):</strong> <span id="rec-due-date" class="highlight-date"></span></p>
+                <p><strong>Late Fine Policy:</strong> <span class="fine-alert">₹10 per day after due date</span></p>
+            </div>
+            <div class="receipt-footer">
+                <div class="approval-stamp">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <div>
+                        <strong>APPROVED BY HEAD LIBRARIAN</strong>
+                        <small>Digital Verification Seal • Central Library</small>
+                    </div>
+                </div>
+            </div>
+            <div class="receipt-actions">
+                <button onclick="window.print()" class="print-btn"><i class="fa-solid fa-print"></i> Print Receipt</button>
+                <button onclick="closeReceiptModal()" class="primary-btn">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 5. ADMIN DASHBOARD ================= -->
+    <div id="admin-dashboard" class="screen hidden">
+        <nav class="navbar admin-nav">
+            <div class="nav-brand">
+                <div class="uni-logo-placeholder" title="University Logo Placeholder">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>UNI LOGO</span>
+                </div>
+                <div>
+                    <div class="brand-title">Central Library — Head Admin Panel</div>
+                    <small class="brand-subtitle">Inventory & Reservation Control</small>
+                </div>
+            </div>
+            <button onclick="logout()" class="logout-btn">Logout</button>
+        </nav>
+
+        <div class="container">
+            <h2>Inventory & Student Issue Monitor</h2>
+            <p class="subtext">Default stock per book is 50 copies. View live remaining quantities and all student bookings below.</p>
+            
+            <div class="table-responsive">
+                <table class="record-table">
+                    <thead>
+                        <tr>
+                            <th>Book Title</th>
+                            <th>Course</th>
+                            <th>Section</th>
+                            <th>Shelf No.</th>
+                            <th>Available Stock (Out of 50)</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-stock-body"></tbody>
+                </table>
+            </div>
+
+            <h2 style="margin-top: 30px;">All Student Reservations Log</h2>
+            <div class="table-responsive">
+                <table class="record-table">
+                    <thead>
+                        <tr>
+                            <th>Receipt ID</th>
+                            <th>Student Name</th>
+                            <th>Reg. No</th>
+                            <th>Book Booked</th>
+                            <th>Date of Booking</th>
+                            <th>Due Date</th>
+                            <th>Status / Fine</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-bookings-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
